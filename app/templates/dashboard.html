@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Orbit — {{ router_name }}{% endblock %}
+
+{% block body %}
+<!-- ═══ Header ═══ -->
+<header class="noc-header">
+    <div class="container-fluid">
+        <div class="noc-brand">
+            <div class="noc-logo" style="background: linear-gradient(135deg, #6366f1, #06b6d4); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;">ORBIT</div>
+            <div>
+                <div class="noc-title" id="router-identity">{{ router_name }}</div>
+                <div class="noc-subtitle" id="router-meta">Initializing...</div>
+            </div>
+        </div>
+        <div class="header-meta">
+            <div class="meta-item">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-label">Connecting...</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-clock"></i>
+                <span id="last-update">—</span>
+            </div>
+            <div class="meta-item">
+                <i class="bi bi-arrow-repeat"></i>
+                <span id="refresh-countdown">{{ collect_interval }}s</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ Main Content ═══ -->
+<main class="noc-main">
+
+    <!-- ─── KPI Cards ─── -->
+    <section class="kpi-grid" id="kpi-section">
+        <!-- Clients -->
+        <div class="kpi-card accent-indigo" id="kpi-clients">
+            <div class="kpi-icon indigo"><i class="bi bi-people-fill"></i></div>
+            <div class="kpi-label">Clients Connected</div>
+            <div class="kpi-value" id="val-clients">—</div>
+        </div>
+
+        <!-- Download -->
+        <div class="kpi-card accent-cyan" id="kpi-download">
+            <div class="kpi-icon cyan"><i class="bi bi-arrow-down-circle-fill"></i></div>
+            <div class="kpi-label">Download</div>
+            <div class="kpi-value small-text" id="val-download">—</div>
+        </div>
+
+        <!-- Upload -->
+        <div class="kpi-card accent-violet" id="kpi-upload">
+            <div class="kpi-icon violet"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div class="kpi-label">Upload</div>
+            <div class="kpi-value small-text" id="val-upload">—</div>
+        </div>
+
+        <!-- CPU -->
+        <div class="kpi-card accent-amber" id="kpi-cpu">
+            <div class="kpi-icon amber"><i class="bi bi-cpu-fill"></i></div>
+            <div class="kpi-label">CPU Load</div>
+            <div class="kpi-value" id="val-cpu">—<span class="kpi-unit">%</span></div>
+        </div>
+
+        <!-- RAM -->
+        <div class="kpi-card accent-rose" id="kpi-ram">
+            <div class="kpi-icon rose"><i class="bi bi-memory"></i></div>
+            <div class="kpi-label">RAM Usage</div>
+            <div class="kpi-value" id="val-ram">—<span class="kpi-unit">%</span></div>
+        </div>
+
+        <!-- Router Status -->
+        <div class="kpi-card accent-emerald" id="kpi-router-status">
+            <div class="kpi-icon emerald"><i class="bi bi-router-fill"></i></div>
+            <div class="kpi-label">Router</div>
+            <div class="kpi-value">
+                <span class="badge-status" id="val-router-status">—</span>
+            </div>
+        </div>
+
+        <!-- ISP Status -->
+        <div class="kpi-card accent-cyan" id="kpi-isp-status">
+            <div class="kpi-icon cyan"><i class="bi bi-globe2"></i></div>
+            <div class="kpi-label">ISP / WAN</div>
+            <div class="kpi-value">
+                <span class="badge-status" id="val-isp-status">—</span>
+            </div>
+        </div>
+
+        <!-- Uptime -->
+        <div class="kpi-card accent-indigo" id="kpi-uptime">
+            <div class="kpi-icon indigo"><i class="bi bi-clock-history"></i></div>
+            <div class="kpi-label">Uptime</div>
+            <div class="kpi-value small-text" id="val-uptime">—</div>
+        </div>
+    </section>
+
+    <!-- ─── VPN Summary & Metrics ─── -->
+    <section class="vpn-summary-section" id="vpn-summary-section">
+        <div class="vpn-summary-card">
+            <div class="vpn-summary-header">
+                <div class="vpn-title"><i class="bi bi-shield-lock-fill me-2 text-cyan"></i>VPN &mdash; Resumen de Usuarios Remotos</div>
+                <div class="vpn-protocols" id="vpn-protocols-badge">
+                    <span class="badge-protocol">Buscando VPN...</span>
+                </div>
+            </div>
+            <div class="vpn-metrics-grid">
+                <div class="vpn-metric-item">
+                    <div class="vpn-metric-label">Usuarios Conectados</div>
+                    <div class="vpn-metric-value" id="vpn-val-connected">0</div>
+                </div>
+                <div class="vpn-metric-item">
+                    <div class="vpn-metric-label">Tiempo Promedio Sesión</div>
+                    <div class="vpn-metric-value" id="vpn-val-avg-time">&mdash;</div>
+                </div>
+                <div class="vpn-metric-item">
+                    <div class="vpn-metric-label">Mayor Tiempo Conectado</div>
+                    <div class="vpn-metric-value" id="vpn-val-max-time">&mdash;</div>
+                    <div class="vpn-metric-sub" id="vpn-sub-max-user">&mdash;</div>
+                </div>
+                <div class="vpn-metric-item">
+                    <div class="vpn-metric-label">Última Conexión</div>
+                    <div class="vpn-metric-value" id="vpn-val-last-user">&mdash;</div>
+                    <div class="vpn-metric-sub" id="vpn-sub-last-time">&mdash;</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Charts ─── -->
+    <section class="charts-grid" id="charts-section">
+        <!-- Traffic 24h -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Traffic &mdash; Last 24 Hours</div>
+                    <div class="chart-subtitle">WAN interface throughput</div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-rx)"></span> Download
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-tx)"></span> Upload
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-traffic-24h"></canvas></div>
+        </div>
+
+        <!-- Traffic 7d -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Traffic &mdash; Last 7 Days</div>
+                    <div class="chart-subtitle">Weekly throughput trend</div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-rx)"></span> Download
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-tx)"></span> Upload
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-traffic-7d"></canvas></div>
+        </div>
+
+        <!-- Concurrent Users -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Concurrent Users</div>
+                    <div class="chart-subtitle">Connected devices over time</div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-users"></canvas></div>
+        </div>
+
+        <!-- Daily Consumption -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Daily Consumption</div>
+                    <div class="chart-subtitle">Total traffic per day</div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-rx)"></span> Download
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background:var(--chart-tx)"></span> Upload
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-daily"></canvas></div>
+        </div>
+
+        <!-- CPU History -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">CPU History</div>
+                    <div class="chart-subtitle">Load percentage &mdash; 24h</div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-cpu"></canvas></div>
+        </div>
+
+        <!-- RAM History -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">RAM History</div>
+                    <div class="chart-subtitle">Usage percentage &mdash; 24h</div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-ram"></canvas></div>
+        </div>
+    </section>
+
+    <!-- ─── Unified Users Section ─── -->
+    <section class="users-section mt-4" id="users-section">
+        <div class="table-card user-table-card">
+            <div class="table-card-header user-header-flex">
+                <div class="table-card-title"><i class="bi bi-people-fill me-2"></i>👤 Usuarios</div>
+                
+                <!-- Category Filter Tabs -->
+                <div class="user-category-tabs" id="user-tabs">
+                    <button class="tab-btn active" data-cat="all">
+                        🌐 Todos <span class="tab-badge" id="count-user-all">0</span>
+                    </button>
+                    <button class="tab-btn cat-oficina" data-cat="oficina">
+                        🟢 Oficina <span class="tab-badge" id="count-user-oficina">0</span>
+                    </button>
+                    <button class="tab-btn cat-vpn" data-cat="vpn">
+                        🔵 VPN <span class="tab-badge" id="count-user-vpn">0</span>
+                    </button>
+                    <button class="tab-btn cat-vm" data-cat="vm">
+                        🟣 Servers / VMs <span class="tab-badge" id="count-user-vm">0</span>
+                    </button>
+                    <button class="tab-btn cat-offline" data-cat="offline">
+                        ⚪ Offline <span class="tab-badge" id="count-user-offline">0</span>
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="user-search-wrapper">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" id="user-search-input" class="noc-search-input" placeholder="Buscar host, usuario VPN o IP...">
+                </div>
+            </div>
+
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>Host / Usuario</th>
+                            <th>Origen / Tipo</th>
+                            <th>IP Local / IP VPN</th>
+                            <th>Tiempo Sesión</th>
+                            <th>Consumo / Velocidad (Queue)</th>
+                            <th>Estado / Última Actividad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-unified-users">
+                        <tr><td colspan="6" class="empty-state"><p>Cargando usuarios unificados...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Tables (Interfaces, Alerts, Outages) ─── -->
+    <section class="tables-grid mt-4" id="tables-section">
+
+        <!-- Interfaces -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-ethernet me-2"></i>Interfaces</div>
+                <span class="table-count" id="count-interfaces">0</span>
+            </div>
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>RX</th>
+                            <th>TX</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-interfaces">
+                        <tr><td colspan="5" class="empty-state"><p>Waiting for data...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Alerts</div>
+                <span class="table-count" id="count-alerts">0</span>
+            </div>
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Started</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-alerts">
+                        <tr><td colspan="5" class="empty-state"><p>No alerts</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Outage History -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-lightning-fill me-2"></i>Outage History</div>
+                <span class="table-count" id="count-outages">0</span>
+            </div>
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Started</th>
+                            <th>Ended</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-outages">
+                        <tr><td colspan="5" class="empty-state"><p>No outages recorded</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ═══ Footer ═══ -->
+<footer class="noc-footer">
+    Orbit &mdash; Read-Only Network Intelligence &bull; Data refreshes every {{ collect_interval }}s
+</footer>
+{% endblock %}
