@@ -87,3 +87,68 @@ def init_db() -> None:
                 conn.execute(text(f"ALTER TABLE resource_snapshots ADD COLUMN {col_name} {col_type}"))
 
         conn.commit()
+
+    # Seed default network and devices from config
+    _seed_devices()
+
+
+def _seed_devices() -> None:
+    """Register default network and devices from environment config."""
+    from app.config import settings
+    from app.models.device import Device
+    from app.models.network import Network
+
+    db = SessionLocal()
+    try:
+        # Seed default network if none exists
+        network = db.query(Network).first()
+        if not network:
+            network = Network(
+                name="LAN Principal",
+                description="Red local principal",
+                gateway=settings.router_host,
+                subnet="192.168.0.0/21",
+            )
+            db.add(network)
+            db.flush()
+
+        # Seed MikroTik device
+        mk_device = (
+            db.query(Device)
+            .filter_by(device_type="mikrotik", host=settings.router_host)
+            .first()
+        )
+        if not mk_device:
+            mk_device = Device(
+                network_id=network.id if network else None,
+                name=settings.router_name,
+                device_type="mikrotik",
+                host=settings.router_host,
+                port=settings.router_port,
+                is_managed=True,
+            )
+            db.add(mk_device)
+
+        # Seed Ubiquiti devices from env vars
+        for ubnt_cfg in settings.ubiquiti_devices:
+            existing = (
+                db.query(Device)
+                .filter_by(device_type="ubiquiti", host=ubnt_cfg["host"])
+                .first()
+            )
+            if not existing:
+                db.add(Device(
+                    network_id=network.id if network else None,
+                    name=ubnt_cfg["name"],
+                    device_type="ubiquiti",
+                    host=ubnt_cfg["host"],
+                    port=22,
+                    is_managed=True,
+                ))
+
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+

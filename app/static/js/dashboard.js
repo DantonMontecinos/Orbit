@@ -27,6 +27,8 @@ const API = {
     interfaces: '/api/interfaces',
     alerts: '/api/alerts',
     outages: '/api/outages',
+    infraKpis: '/api/infrastructure/kpis',
+    wanStatus: '/api/wan/status',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -663,6 +665,82 @@ function startCountdown() {
     }, 1000);
 }
 
+async function updateInfraKpis() {
+    const data = await fetchJSON(API.infraKpis);
+    if (!data) return;
+
+    const updates = {
+        'val-infra-aps': data.online_aps != null ? `${data.online_aps}/${data.total_aps}` : '—',
+        'val-infra-wifi': data.wifi_clients ?? '—',
+        'val-infra-ssids': data.total_ssids ?? '—',
+    };
+
+    for (const [id, value] of Object.entries(updates)) {
+        const el = document.getElementById(id);
+        if (el && el.textContent !== String(value)) {
+            el.textContent = value;
+            flashElement(el);
+        }
+    }
+
+    const availEl = document.getElementById('val-infra-avail');
+    if (availEl) {
+        availEl.innerHTML = `${data.availability ?? 0}<span class="kpi-unit">%</span>`;
+    }
+}
+
+async function updateWanStatus() {
+    const data = await fetchJSON(API.wanStatus);
+    const container = document.getElementById('wan-grid');
+    if (!container || !data) return;
+
+    if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p><i class="bi bi-info-circle me-2"></i>No hay enlaces WAN configurados en .env (ej. ISP1_NAME=IPLAN, ISP1_INTERFACE=ether10IPLAN)</p></div>';
+        return;
+    }
+
+    const html = data.map(isp => {
+        const isOnline = isp.status === 'online';
+        const badgeClass = isOnline ? 'online' : (isp.status === 'unknown' ? 'warning' : 'offline');
+        const badgeText = isOnline ? 'Online' : (isp.status === 'unknown' ? 'Desconocido' : 'Offline');
+        const badgeDot = isOnline ? '🟢' : (isp.status === 'unknown' ? '🟡' : '🔴');
+        const updateTime = isp.last_update ? new Date(isp.last_update).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
+
+        return `
+        <div class="wan-card ${badgeClass}">
+            <div class="wan-card-header">
+                <div class="wan-isp-name">${isp.name}</div>
+                <span class="badge-status ${badgeClass}"><span class="status-dot ${badgeClass}"></span> ${badgeDot} ${badgeText}</span>
+            </div>
+            <div class="wan-card-body">
+                <div class="wan-info-row">
+                    <span class="wan-info-label"><i class="bi bi-diagram-2 me-1"></i>Interfaz:</span>
+                    <span class="wan-info-val"><code>${isp.interface}</code></span>
+                </div>
+                <div class="wan-info-row">
+                    <span class="wan-info-label"><i class="bi bi-globe me-1"></i>IP WAN:</span>
+                    <span class="wan-info-val">${isp.ip_wan}</span>
+                </div>
+                <div class="wan-rates-grid">
+                    <div class="wan-rate-box rx">
+                        <span class="rate-label"><i class="bi bi-arrow-down-short"></i> RX</span>
+                        <span class="rate-val">${isp.rx_fmt}</span>
+                    </div>
+                    <div class="wan-rate-box tx">
+                        <span class="rate-label"><i class="bi bi-arrow-up-short"></i> TX</span>
+                        <span class="rate-val">${isp.tx_fmt}</span>
+                    </div>
+                </div>
+                <div class="wan-card-footer">
+                    <small class="text-muted"><i class="bi bi-clock me-1"></i>Actualizado: ${updateTime}</small>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Main Refresh Loop
 // ═══════════════════════════════════════════════════════════════
@@ -670,6 +748,8 @@ function startCountdown() {
 async function refreshAll() {
     await Promise.all([
         updateStatus(),
+        updateInfraKpis(),
+        updateWanStatus(),
         updateVpnSummary(),
         updateUnifiedUsers(),
         refreshCharts(),

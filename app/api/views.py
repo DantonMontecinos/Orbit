@@ -25,3 +25,24 @@ async def dashboard(request: Request):
         collect_interval=settings.collect_interval_seconds,
     )
     return HTMLResponse(content=html)
+
+
+@router.get("/wifi", response_class=HTMLResponse)
+async def wifi_view(request: Request):
+    """Render the WiFi monitoring page."""
+    template = _env.get_template("wifi.html")
+    html = template.render(
+        collect_interval=settings.collect_interval_seconds,
+    )
+    return HTMLResponse(content=html)
+
+
+@router.get("/topology", response_class=HTMLResponse)
+async def topology_view(request: Request):
+    """Render the topology page."""
+    template = _env.get_template("topology.html")
+    html = template.render(
+        collect_interval=settings.collect_interval_seconds,
+    )
+    return HTMLResponse(content=html)
+

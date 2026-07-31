@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Orbit — WiFi{% endblock %}
+{% block nav_wifi %}active{% endblock %}
+
+{% block body %}
+<main class="noc-main">
+
+    <!-- ─── WiFi Header ─── -->
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1 class="page-title"><i class="bi bi-wifi me-2"></i>WiFi Monitoring</h1>
+            <div class="page-subtitle">SSIDs, clientes y Access Points en tiempo real</div>
+        </div>
+        <div class="header-meta">
+            <div class="meta-item">
+                <i class="bi bi-arrow-repeat"></i>
+                <span id="wifi-refresh-countdown">{{ collect_interval }}s</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── WiFi KPI Bar ─── -->
+    <section class="infra-kpi-bar" id="wifi-kpi-bar">
+        <div class="infra-kpi-item">
+            <i class="bi bi-wifi"></i>
+            <span class="infra-kpi-label">Total Clients</span>
+            <span class="infra-kpi-value" id="wifi-total-clients">—</span>
+        </div>
+        <div class="infra-kpi-item">
+            <i class="bi bi-broadcast"></i>
+            <span class="infra-kpi-label">SSIDs</span>
+            <span class="infra-kpi-value" id="wifi-total-ssids">—</span>
+        </div>
+        <div class="infra-kpi-item">
+            <i class="bi bi-router-fill"></i>
+            <span class="infra-kpi-label">APs Online</span>
+            <span class="infra-kpi-value" id="wifi-total-aps">—</span>
+        </div>
+    </section>
+
+    <!-- ─── SSID Cards ─── -->
+    <section class="wifi-ssid-grid" id="ssid-cards-section">
+        <div class="empty-state" id="ssid-empty">
+            <p><i class="bi bi-wifi-off me-2"></i>Esperando datos de WiFi...</p>
+        </div>
+    </section>
+
+    <!-- ─── WiFi History Chart ─── -->
+    <section class="charts-grid" style="grid-template-columns: 1fr;">
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title">Clientes WiFi por Hora</div>
+                    <div class="chart-subtitle">Últimas 24 horas — agrupado por SSID</div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="chart-wifi-history"></canvas></div>
+        </div>
+    </section>
+
+    <!-- ─── AP Status Table ─── -->
+    <section class="tables-grid mt-4" style="grid-template-columns: 1fr;">
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-router-fill me-2"></i>Access Points</div>
+                <span class="table-count" id="count-aps">0</span>
+            </div>
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>AP</th>
+                            <th>Model</th>
+                            <th>Firmware</th>
+                            <th>Clients</th>
+                            <th>CPU</th>
+                            <th>RAM</th>
+                            <th>Latency</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-aps">
+                        <tr><td colspan="8" class="empty-state"><p>Waiting for AP data...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="noc-footer">
+    Orbit &mdash; WiFi Monitoring &bull; Data refreshes every {{ collect_interval }}s
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/wifi.js"></script>
+{% endblock %}

@@ -1,0 +1,1 @@
+"""Ping collector package."""

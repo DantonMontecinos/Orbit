@@ -27,15 +27,26 @@ scheduler = BackgroundScheduler(
 def start_scheduler() -> None:
     """Register jobs and start the scheduler."""
     from app.collector.tasks import run_collection
+    from app.collectors.orchestrator import run_device_collection
     from app.services.history import purge_old_data
 
-    # Main collection job
+    # Main MikroTik collection job (legacy — unchanged)
     scheduler.add_job(
         run_collection,
         trigger="interval",
         seconds=settings.collect_interval_seconds,
         id="collect_metrics",
         name="Collect MikroTik metrics",
+        replace_existing=True,
+    )
+
+    # Multi-device collection (Ubiquiti, Ping, future vendors)
+    scheduler.add_job(
+        run_device_collection,
+        trigger="interval",
+        seconds=settings.collect_interval_seconds,
+        id="collect_devices",
+        name="Collect device metrics (Ubiquiti/Ping)",
         replace_existing=True,
     )
 

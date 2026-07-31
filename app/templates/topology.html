@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Orbit — Topología{% endblock %}
+{% block nav_topology %}active{% endblock %}
+
+{% block body %}
+<main class="noc-main">
+
+    <!-- ─── Topology Header ─── -->
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1 class="page-title"><i class="bi bi-diagram-3 me-2"></i>Topología de Red</h1>
+            <div class="page-subtitle">Vista de infraestructura en tiempo real</div>
+        </div>
+        <div class="header-meta">
+            <div class="meta-item">
+                <i class="bi bi-arrow-repeat"></i>
+                <span id="topo-refresh-countdown">{{ collect_interval }}s</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Topology Diagram ─── -->
+    <section class="topology-container" id="topology-section">
+        <div class="topo-tree">
+            <!-- Internet -->
+            <div class="topo-node topo-internet">
+                <div class="topo-node-icon"><i class="bi bi-cloud-fill"></i></div>
+                <div class="topo-node-label">Internet</div>
+            </div>
+
+            <div class="topo-connector"></div>
+
+            <!-- ISP Layer -->
+            <div class="topo-layer" id="topo-isp-layer">
+                <div class="empty-state" id="topo-isp-empty"><p>Cargando ISPs...</p></div>
+            </div>
+
+            <div class="topo-connector"></div>
+
+            <!-- MikroTik Layer -->
+            <div class="topo-layer" id="topo-mikrotik-layer">
+                <div class="empty-state" id="topo-mk-empty"><p>Loading...</p></div>
+            </div>
+
+            <div class="topo-connector"></div>
+
+            <!-- AP Layer -->
+            <div class="topo-layer" id="topo-ap-layer">
+                <div class="empty-state" id="topo-ap-empty"><p>Loading...</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Device Summary Table ─── -->
+    <section class="tables-grid mt-4" style="grid-template-columns: 1fr;">
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-hdd-stack me-2"></i>Dispositivos</div>
+                <span class="table-count" id="count-devices">0</span>
+            </div>
+            <div class="table-scroll">
+                <table class="noc-table">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>IP</th>
+                            <th>Model</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-devices">
+                        <tr><td colspan="5" class="empty-state"><p>Loading devices...</p></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="noc-footer">
+    Orbit &mdash; Network Topology &bull; Data refreshes every {{ collect_interval }}s
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/topology.js"></script>
+{% endblock %}

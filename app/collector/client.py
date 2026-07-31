@@ -187,6 +187,18 @@ class MikroTikClient:
         """
         return self._get("/ip/route")
 
+    def get_ip_addresses(self) -> list[dict[str, Any]]:
+        """
+        /ip/address/print
+
+        Returns interface IP address assignments.
+        """
+        try:
+            return self._get("/ip/address")
+        except Exception:
+            log.debug("IP addresses unavailable")
+            return []
+
     # ── PPP & VPN ──────────────────────────────────────────────
 
     def get_ppp_active(self) -> list[dict[str, Any]]:
@@ -329,6 +341,7 @@ class MikroTikClient:
             ("simple_queues", self.get_simple_queues),
             ("vpn_types_detected", self.detect_vpn_types),
             ("routes", self.get_routes),
+            ("ip_addresses", self.get_ip_addresses),
         ]
 
         for key, func in collectors:

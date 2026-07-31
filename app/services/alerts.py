@@ -36,6 +36,48 @@ def _get_active_alert(
     )
 
 
+def _format_webex_alert_markdown(alert_type: str, severity: str, message: str) -> str:
+    """Format rich Markdown for Webex Teams alert notification."""
+    icon = "🚨" if severity == "critical" else "⚠️"
+    title = "ALERTA NOC — EVENTO REGISTRADO"
+
+    if alert_type.startswith("isp_down"):
+        icon = "🔴"
+        title = "ALERTA WAN — ENLACE ISP CAÍDO"
+    elif alert_type.startswith("vpn_disconnect"):
+        icon = "🔌"
+        title = "NOTIFICACIÓN VPN — USUARIO DESCONECTADO"
+
+    return (
+        f"{icon} **{title}**\n\n"
+        f"- **Tipo**: `{alert_type}`\n"
+        f"- **Severidad**: `{severity.upper()}`\n"
+        f"- **Detalle**: {message}\n"
+        f"- **Hora**: `{utcnow().strftime('%H:%M:%S UTC')}`"
+    )
+
+
+def _format_webex_resolved_markdown(alert_type: str, message: str, duration_sec: int) -> str:
+    """Format rich Markdown for Webex Teams resolution notification."""
+    title = "EVENTO RESUELTO"
+    if alert_type.startswith("isp_down"):
+        title = "ENLACE ISP RESTABLECIDO"
+    elif alert_type.startswith("vpn_disconnect"):
+        title = "USUARIO VPN RE-CONECTADO"
+
+    mins = duration_sec // 60
+    secs = duration_sec % 60
+    dur_str = f"{mins}m {secs}s" if mins else f"{secs}s"
+
+    return (
+        f"🟢 **{title}**\n\n"
+        f"- **Tipo**: `{alert_type}`\n"
+        f"- **Detalle**: {message}\n"
+        f"- **Duración del evento**: `{dur_str}`\n"
+        f"- **Hora de resolución**: `{utcnow().strftime('%H:%M:%S UTC')}`"
+    )
+
+
 def _create_alert(
     db: Session,
     router_id: int,
@@ -43,7 +85,7 @@ def _create_alert(
     severity: str,
     message: str,
 ) -> Alert:
-    """Create a new active alert."""
+    """Create a new active alert and dispatch Webex notification."""
     alert = Alert(
         router_id=router_id,
         alert_type=alert_type,
@@ -55,6 +97,12 @@ def _create_alert(
     db.add(alert)
     db.commit()
     log.warning("ALERT [%s] %s: %s", severity.upper(), alert_type, message)
+
+    # Dispatch Webex Teams notification
+    from app.services.webex import send_webex_message
+    md = _format_webex_alert_markdown(alert_type, severity, message)
+    send_webex_message(md)
+
     return alert
 
 
@@ -63,7 +111,7 @@ def _resolve_alert(
     router_id: int,
     alert_type: str,
 ) -> None:
-    """Resolve an active alert if one exists."""
+    """Resolve an active alert if one exists and dispatch Webex notification."""
     alert = _get_active_alert(db, router_id, alert_type)
     if alert:
         alert.resolve()
@@ -73,6 +121,13 @@ def _resolve_alert(
             alert_type,
             alert.duration_seconds or 0,
         )
+
+        # Dispatch Webex Teams resolution notification
+        from app.services.webex import send_webex_message
+        md = _format_webex_resolved_markdown(
+            alert_type, alert.message, alert.duration_seconds or 0
+        )
+        send_webex_message(md)
 
 
 def evaluate_alerts(
@@ -89,10 +144,44 @@ def evaluate_alerts(
     """
     _check_router_reachable(db, router_id, snapshot)
     _check_internet_status(db, router_id, snapshot)
+    _check_isps(db, router_id)
     _check_cpu(db, router_id, snapshot, previous)
     _check_ram(db, router_id, snapshot, previous)
     _check_interfaces(db, router_id, snapshot, previous)
     _check_vpn_disconnections(db, router_id)
+
+
+def _check_isps(db: Session, router_id: int) -> None:
+    """Detect WAN ISP link outages (e.g. IPLAN, Fibertel down/online)."""
+    from app.config import settings
+    from app.models.wan_snapshot import WanSnapshot
+
+    for isp in settings.isp_configs:
+        name = isp["name"]
+        iface = isp["interface"]
+        alert_key = f"isp_down:{name}"
+
+        # Get latest WanSnapshot for this ISP
+        latest = (
+            db.query(WanSnapshot)
+            .filter_by(isp_name=name)
+            .order_by(WanSnapshot.timestamp.desc())
+            .first()
+        )
+
+        if latest:
+            if latest.status in ("offline", "no-route", "down"):
+                existing = _get_active_alert(db, router_id, alert_key)
+                if not existing:
+                    _create_alert(
+                        db,
+                        router_id,
+                        alert_key,
+                        "critical",
+                        f"Enlace ISP '{name}' ({iface}) fuera de servicio. Estado: {latest.status.upper()}. IP WAN: {latest.ip_wan or '—'}",
+                    )
+            elif latest.status == "online":
+                _resolve_alert(db, router_id, alert_key)
 
 
 def _check_vpn_disconnections(

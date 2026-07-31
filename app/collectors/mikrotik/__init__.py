@@ -1,0 +1,1 @@
+"""MikroTik collector package."""

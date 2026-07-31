@@ -930,3 +930,414 @@ body {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Global Navigation Bar
+   ═══════════════════════════════════════════════════════════ */
+
+.orbit-nav {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 110;
+    backdrop-filter: blur(12px);
+}
+
+.orbit-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.orbit-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.orbit-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.orbit-nav-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-card-hover);
+}
+
+.orbit-nav-item.active {
+    color: var(--text-primary);
+    background: var(--accent-indigo-soft);
+    border: 1px solid var(--border-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Page Header
+   ═══════════════════════════════════════════════════════════ */
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.page-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Infrastructure KPI Bar
+   ═══════════════════════════════════════════════════════════ */
+
+.infra-kpi-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.infra-kpi-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: var(--transition-base);
+}
+
+.infra-kpi-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-medium);
+}
+
+.infra-kpi-item i {
+    font-size: 1.3rem;
+    color: var(--accent-indigo);
+}
+
+.infra-kpi-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    display: block;
+}
+
+.infra-kpi-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WiFi SSID Grid & Cards
+   ═══════════════════════════════════════════════════════════ */
+
+.wifi-ssid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.wifi-ssid-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.15rem;
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.wifi-ssid-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-medium);
+    transform: translateY(-2px);
+}
+
+.ssid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.ssid-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ssid-client-count {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--ssid-color, var(--accent-indigo));
+}
+
+.ssid-bar-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: 0.65rem;
+}
+
+.ssid-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width var(--transition-base);
+}
+
+.ssid-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Topology Tree View
+   ═══════════════════════════════════════════════════════════ */
+
+.topology-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 2rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.topo-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.topo-node {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 180px;
+    justify-content: center;
+    transition: var(--transition-base);
+}
+
+.topo-internet {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(99, 102, 241, 0.15));
+    border-color: rgba(34, 211, 238, 0.3);
+}
+
+.topo-internet .topo-node-icon {
+    color: var(--accent-cyan);
+    font-size: 1.2rem;
+}
+
+.topo-connector {
+    width: 2px;
+    height: 24px;
+    background: var(--border-medium);
+}
+
+.topo-layer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.topo-device.topo-online {
+    border-color: rgba(52, 211, 153, 0.3);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.1);
+}
+
+.topo-device.topo-offline {
+    border-color: rgba(244, 63, 94, 0.3);
+    opacity: 0.6;
+}
+
+.topo-node-icon {
+    font-size: 1.1rem;
+    color: var(--accent-indigo);
+}
+
+.topo-node-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.topo-node-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+.topo-node-status {
+    font-size: 0.65rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Multi-ISP WAN Connectivity Cards
+   ═══════════════════════════════════════════════════════════ */
+
+.wan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.wan-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.15rem;
+    transition: var(--transition-base);
+}
+
+.wan-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-medium);
+    transform: translateY(-2px);
+}
+
+.wan-card.online {
+    border-left: 4px solid var(--accent-emerald);
+}
+
+.wan-card.offline {
+    border-left: 4px solid var(--accent-rose);
+}
+
+.wan-card.warning {
+    border-left: 4px solid var(--accent-amber);
+}
+
+.wan-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.wan-isp-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wan-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+}
+
+.wan-info-label {
+    color: var(--text-muted);
+}
+
+.wan-info-val {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.wan-rates-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+    margin-bottom: 0.85rem;
+}
+
+.wan-rate-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.wan-rate-box.rx .rate-label {
+    color: var(--accent-indigo);
+}
+
+.wan-rate-box.tx .rate-label {
+    color: var(--accent-cyan);
+}
+
+.rate-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.rate-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wan-card-footer {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.topo-isp.topo-online {
+    border-color: rgba(52, 211, 153, 0.3);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.1);
+}
+
+.topo-isp.topo-offline {
+    border-color: rgba(244, 63, 94, 0.3);
+    opacity: 0.7;
+}
+
+.topo-isp.topo-unknown {
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+
+

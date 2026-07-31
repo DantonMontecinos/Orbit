@@ -166,3 +166,90 @@ def api_outages(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
     if router_id is None:
         return []
     return get_outage_history(db, router_id)
+
+
+# ── New Multi-Device Endpoints ──────────────────────────────────
+
+@router.get("/infrastructure/kpis")
+def api_infrastructure_kpis(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """Global infrastructure KPIs (APs, WiFi clients, SSIDs, availability)."""
+    from app.services.wifi_service import get_wifi_summary, get_ap_status
+
+    wifi = get_wifi_summary(db)
+    aps = get_ap_status(db)
+
+    total_aps = len(aps)
+    online_aps = sum(1 for a in aps if a["is_reachable"])
+    availability = round((online_aps / total_aps) * 100) if total_aps > 0 else 0
+
+    return {
+        "total_aps": total_aps,
+        "online_aps": online_aps,
+        "wifi_clients": wifi["total_clients"],
+        "total_ssids": wifi["total_ssids"],
+        "availability": availability,
+    }
+
+
+@router.get("/devices")
+def api_devices(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    """List all managed devices."""
+    from app.models.device import Device
+
+    devices = db.query(Device).filter_by(is_managed=True).all()
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "type": d.device_type,
+            "host": d.host,
+            "model": d.model,
+            "firmware": d.firmware,
+            "is_reachable": d.is_reachable,
+            "last_seen": d.last_seen.isoformat() if d.last_seen else None,
+        }
+        for d in devices
+    ]
+
+
+@router.get("/wifi/summary")
+def api_wifi_summary(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """WiFi SSIDs with aggregated client counts across all APs."""
+    from app.services.wifi_service import get_wifi_summary
+    return get_wifi_summary(db)
+
+
+@router.get("/wifi/history")
+def api_wifi_history(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    """WiFi client count history per SSID (24h, hourly)."""
+    from app.services.wifi_service import get_wifi_history
+    return get_wifi_history(db)
+
+
+@router.get("/wifi/aps")
+def api_wifi_aps(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    """Status of all Ubiquiti APs."""
+    from app.services.wifi_service import get_ap_status
+    return get_ap_status(db)
+
+
+@router.get("/networks")
+def api_networks(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    """List of networks with device counts."""
+    from app.services.network_service import get_networks_overview
+    return get_networks_overview(db)
+
+
+@router.get("/topology")
+def api_topology(db: Session = Depends(get_db)) -> dict[str, Any]:
+    """Infrastructure topology tree data."""
+    from app.services.network_service import get_topology
+    return get_topology(db)
+
+
+@router.get("/wan/status")
+def api_wan_status(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    """Multi-ISP WAN status cards data."""
+    from app.services.wan_service import get_current_wan_status
+    return get_current_wan_status(db)
+

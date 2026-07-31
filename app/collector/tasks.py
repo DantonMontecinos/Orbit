@@ -230,6 +230,72 @@ def _save_interface_snapshots(
         db.add(iface_snap)
 
 
+def _process_wan_isps(
+    db: Session,
+    interfaces: list[dict[str, Any]],
+    ip_addresses: list[dict[str, Any]],
+    routes: list[dict[str, Any]],
+    prev_snapshot: ResourceSnapshot | None,
+    interval_seconds: float,
+    now: datetime,
+) -> None:
+    """Save WanSnapshot history for each configured ISP."""
+    from app.models.wan_snapshot import WanSnapshot
+
+    isp_configs = settings.isp_configs
+    if not isp_configs:
+        return
+
+    iface_map = {i.get("name"): i for i in interfaces if i.get("name")}
+    addr_map = {}
+    for addr in ip_addresses:
+        iface_name = addr.get("interface")
+        if iface_name and "address" in addr:
+            addr_map[iface_name] = addr["address"].split("/")[0]
+
+    for isp in isp_configs:
+        name = isp["name"]
+        iface_name = isp["interface"]
+        iface = iface_map.get(iface_name, {})
+
+        is_running = iface.get("running", "false").lower() == "true"
+        is_disabled = iface.get("disabled", "false").lower() == "true"
+
+        if is_running:
+            status = "online"
+        elif is_disabled or not iface:
+            status = "offline"
+        else:
+            status = "offline"
+
+        ip_wan = addr_map.get(iface_name)
+        rx_bytes = safe_int(iface.get("rx-byte", 0))
+        tx_bytes = safe_int(iface.get("tx-byte", 0))
+
+        rx_bps = 0
+        tx_bps = 0
+        if prev_snapshot and interval_seconds > 0:
+            prev_iface = (
+                db.query(InterfaceSnapshot)
+                .filter_by(snapshot_id=prev_snapshot.id, name=iface_name)
+                .first()
+            )
+            if prev_iface:
+                rx_bps = _calculate_bps(rx_bytes, prev_iface.rx_bytes, interval_seconds)
+                tx_bps = _calculate_bps(tx_bytes, prev_iface.tx_bytes, interval_seconds)
+
+        snap = WanSnapshot(
+            timestamp=now,
+            isp_name=name,
+            interface=iface_name,
+            status=status,
+            ip_wan=ip_wan,
+            rx_bps=rx_bps,
+            tx_bps=tx_bps,
+        )
+        db.add(snap)
+
+
 INFRASTRUCTURE_IPS = settings.infrastructure_ips_set
 
 VM_MAC_OUIS = (
@@ -534,7 +600,14 @@ def run_collection() -> None:
         interfaces = data.get("interfaces", [])
         routes = data.get("routes", [])
 
-        # Update router info
+        # Update router info & sync Device entity (single source of truth for topology)
+        from app.models.device import Device
+        mk_device = (
+            db.query(Device)
+            .filter_by(device_type="mikrotik", host=settings.router_host)
+            .first()
+        )
+
         if data["is_reachable"]:
             router.identity = identity.get("name")
             router.board_name = res.get("board-name")
@@ -542,8 +615,21 @@ def run_collection() -> None:
             router.architecture = res.get("architecture-name")
             router.is_reachable = True
             router.last_seen = now
+
+            if mk_device:
+                mk_device.is_reachable = True
+                mk_device.last_seen = now
+                mk_device.model = res.get("board-name")
+                mk_device.firmware = res.get("version")
         else:
             router.is_reachable = False
+            if mk_device:
+                mk_device.is_reachable = False
+
+        # Process multi-ISP WAN status
+        _process_wan_isps(
+            db, interfaces, data.get("ip_addresses", []), routes, prev_snapshot, interval_seconds, now
+        )
 
         # Find WAN interface(s) and traffic tracking
         wan_rx, wan_tx, wan_status = _get_wan_traffic_and_status(

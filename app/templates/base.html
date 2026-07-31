@@ -25,13 +25,28 @@
 </head>
 
 <body>
+    <!-- ═══ Global Navigation ═══ -->
+    <nav class="orbit-nav">
+        <div class="orbit-nav-brand">
+            <div class="noc-logo" style="background: linear-gradient(135deg, #6366f1, #06b6d4); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">ORBIT</div>
+        </div>
+        <div class="orbit-nav-links">
+            <a href="/" class="orbit-nav-item {% block nav_dashboard %}{% endblock %}" id="nav-dashboard">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="/wifi" class="orbit-nav-item {% block nav_wifi %}{% endblock %}" id="nav-wifi">
+                <i class="bi bi-wifi"></i> WiFi
+            </a>
+            <a href="/topology" class="orbit-nav-item {% block nav_topology %}{% endblock %}" id="nav-topology">
+                <i class="bi bi-diagram-3"></i> Topología
+            </a>
+        </div>
+    </nav>
+
     {% block body %}{% endblock %}
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-
-    <!-- Dashboard JS -->
-    <script src="/static/js/dashboard.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>

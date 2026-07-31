@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Orbit — {{ router_name }}{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
 
 {% block body %}
 <!-- ═══ Header ═══ -->
@@ -93,6 +94,42 @@
             <div class="kpi-icon indigo"><i class="bi bi-clock-history"></i></div>
             <div class="kpi-label">Uptime</div>
             <div class="kpi-value small-text" id="val-uptime">—</div>
+        </div>
+    </section>
+
+    <!-- ─── Infrastructure KPIs ─── -->
+    <section class="infra-kpi-bar" id="infra-kpi-section">
+        <div class="infra-kpi-item">
+            <i class="bi bi-router-fill"></i>
+            <span class="infra-kpi-label">APs</span>
+            <span class="infra-kpi-value" id="val-infra-aps">—</span>
+        </div>
+        <div class="infra-kpi-item">
+            <i class="bi bi-wifi"></i>
+            <span class="infra-kpi-label">WiFi Clients</span>
+            <span class="infra-kpi-value" id="val-infra-wifi">—</span>
+        </div>
+        <div class="infra-kpi-item">
+            <i class="bi bi-broadcast"></i>
+            <span class="infra-kpi-label">SSIDs</span>
+            <span class="infra-kpi-value" id="val-infra-ssids">—</span>
+        </div>
+        <div class="infra-kpi-item">
+            <i class="bi bi-check-circle-fill"></i>
+            <span class="infra-kpi-label">AP Avail</span>
+            <span class="infra-kpi-value" id="val-infra-avail">—<span class="kpi-unit">%</span></span>
+        </div>
+    </section>
+
+    <!-- ─── Conectividad WAN (Multi-ISP) ─── -->
+    <section class="wan-section mb-4" id="wan-section">
+        <div class="table-card">
+            <div class="table-card-header">
+                <div class="table-card-title"><i class="bi bi-globe2 me-2 text-cyan"></i>🌐 Conectividad WAN</div>
+            </div>
+            <div class="wan-grid p-3" id="wan-grid">
+                <div class="empty-state"><p>Cargando enlaces WAN...</p></div>
+            </div>
         </div>
     </section>
 
@@ -355,4 +392,8 @@
 <footer class="noc-footer">
     Orbit &mdash; Read-Only Network Intelligence &bull; Data refreshes every {{ collect_interval }}s
 </footer>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}

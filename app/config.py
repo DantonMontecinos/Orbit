@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_dir: str = "/logs"
 
+    # ── Webex Bot Notifications ────────────────────────────────
+    webex_bot_token: str = ""
+    webex_room_it_id: str = ""
+    webex_room_test_id: str = ""
+    webex_room_default: str = "it"  # "test" | "it" | "both"
+
     # ── Device Classification ──────────────────────────────────
     infrastructure_ips: str = ""
 
@@ -56,6 +62,41 @@ class Settings(BaseSettings):
         if not self.infrastructure_ips.strip():
             return set()
         return {ip.strip() for ip in self.infrastructure_ips.split(",") if ip.strip()}
+
+    @property
+    def ubiquiti_devices(self) -> list[dict[str, str]]:
+        """Parse UBNT_{N}_* env vars into device configs (up to 10)."""
+        import os
+
+        devices: list[dict[str, str]] = []
+        for i in range(1, 11):
+            host = os.getenv(f"UBNT_{i}_HOST", "").strip()
+            if not host:
+                continue
+            devices.append({
+                "host": host,
+                "user": os.getenv(f"UBNT_{i}_USER", "ubnt").strip(),
+                "password": os.getenv(f"UBNT_{i}_PASSWORD", "").strip(),
+                "name": os.getenv(f"UBNT_{i}_NAME", f"Ubiquiti-{i}").strip(),
+            })
+        return devices
+
+    @property
+    def isp_configs(self) -> list[dict[str, str]]:
+        """Parse ISP{N}_NAME and ISP{N}_INTERFACE env vars (up to 10)."""
+        import os
+
+        isps: list[dict[str, str]] = []
+        for i in range(1, 11):
+            name = os.getenv(f"ISP{i}_NAME", "").strip()
+            iface = os.getenv(f"ISP{i}_INTERFACE", "").strip()
+            if not name or not iface:
+                continue
+            isps.append({
+                "name": name,
+                "interface": iface,
+            })
+        return isps
 
     @property
     def db_url(self) -> str:
