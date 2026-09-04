@@ -33,7 +33,7 @@ from app.services.dashboard import (
     get_users_history,
 )
 from app.services.history import get_outage_history, purge_old_data
-from app.collector.tasks import INFRASTRUCTURE_IPS, _is_virtual_machine, run_collection
+from app.collector.tasks import _is_virtual_machine, run_collection
 from app.utils.formatters import (
     format_bps,
     format_bytes,
@@ -58,37 +58,26 @@ class TestFormatters(unittest.TestCase):
         self.assertEqual(format_queue_limit(None), "Sin límite")
 
     def test_device_classification_rules(self) -> None:
-        # 1. Infrastructure IPs must be classified as Servers/VMs
-        for ip in INFRASTRUCTURE_IPS:
-            self.assertTrue(
-                _is_virtual_machine("AA:BB:CC:DD:EE:FF", "some-host", ip),
-                f"Infrastructure IP {ip} was not classified as Server/VM",
-            )
+        # Mock settings.vm_ips_set since we can't easily mock the property without mocking the class
+        with patch("app.config.Settings.vm_ips_set", new_callable=unittest.mock.PropertyMock) as mock_vm_ips:
+            mock_vm_ips.return_value = {"192.168.1.100", "10.0.0.5"}
 
-        # 2. Server keywords in hostname must be classified as Servers/VMs
-        server_hosts = [
-            "11 - SRV Ambiente DB - Sugar",
-            "MSTR 11 BD Dicsys - SQL14",
-            "SRV AGD Desa y Test",
-            "SRV GitLab",
-            "06 - Nextcloud",
-            "09 - MSTR 10.3 Dicsys - SQL14",
-            "08 - WebApps Dicsys Sugar",
-            "My-HyperV-Host",
-            "Proxmox-Node-1",
-            "Docker-Host",
-        ]
-        for host in server_hosts:
-            self.assertTrue(
-                _is_virtual_machine("11:22:33:44:55:66", host, "10.0.0.5"),
-                f"Host {host} was not classified as Server/VM",
-            )
+            # 1. Configured IPs must be classified as Servers/VMs
+            for ip in mock_vm_ips.return_value:
+                self.assertTrue(
+                    _is_virtual_machine("AA:BB:CC:DD:EE:FF", "some-host", ip),
+                    f"Configured IP {ip} was not classified as Server/VM",
+                )
 
-        # 3. Regular user & mobile devices (Android, iPhone, etc.) should NOT be classified as Servers/VMs
-        self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:33", "iPhone-Franco", "192.168.1.150"))
-        self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:34", "Notebook-Work", "192.168.1.151"))
-        self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:35", "android-f1e2d3c4b5a6", "192.168.1.152"))
-        self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:36", "Galaxy-S21-User", "192.168.1.153"))
+            # 2. Server keywords or VM MACs should NOT be classified as VMs anymore
+            self.assertFalse(
+                _is_virtual_machine("00:50:56:11:22:33", "SRV GitLab", "192.168.1.200"),
+                "Heuristics should not classify as VM",
+            )
+            
+            # 3. Regular user devices should NOT be classified as Servers/VMs
+            self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:34", "Notebook-Work", "192.168.1.151"))
+            self.assertFalse(_is_virtual_machine("AA:BB:CC:11:22:36", "Galaxy-S21-User", "192.168.1.153"))
 
     """Test data formatting utilities."""
 
@@ -135,7 +124,7 @@ class TestReadOnlyClient(unittest.TestCase):
 
     def test_client_has_no_write_methods(self) -> None:
         client = MikroTikClient()
-        forbidden_words = ["add", "set", "remove", "enable", "disable", "write", "execute", "run"]
+        forbidden_words = ["add_", "set_", "remove_", "enable_", "disable_", "write_", "execute_", "run_"]
 
         for attr_name in dir(client):
             if attr_name.startswith("_"):

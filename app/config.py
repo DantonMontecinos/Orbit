@@ -17,6 +17,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     # ── Router Connection ──────────────────────────────────────
@@ -54,14 +55,27 @@ class Settings(BaseSettings):
     webex_room_default: str = "it"  # "test" | "it" | "both"
 
     # ── Device Classification ──────────────────────────────────
-    infrastructure_ips: str = ""
+    @property
+    def vm_configs(self) -> list[dict[str, str]]:
+        """Parse VM{N}_NAME and VM{N}_IP env vars (up to 20)."""
+        import os
+
+        vms: list[dict[str, str]] = []
+        for i in range(1, 21):
+            name = os.getenv(f"VM{i}_NAME", "").strip()
+            ip = os.getenv(f"VM{i}_IP", "").strip()
+            if not name or not ip:
+                continue
+            vms.append({
+                "name": name,
+                "ip": ip,
+            })
+        return vms
 
     @property
-    def infrastructure_ips_set(self) -> set[str]:
-        """Parse comma-separated INFRASTRUCTURE_IPS into a set."""
-        if not self.infrastructure_ips.strip():
-            return set()
-        return {ip.strip() for ip in self.infrastructure_ips.split(",") if ip.strip()}
+    def vm_ips_set(self) -> set[str]:
+        """Set of all VM IPs."""
+        return {vm["ip"] for vm in self.vm_configs}
 
     @property
     def ubiquiti_devices(self) -> list[dict[str, str]]:

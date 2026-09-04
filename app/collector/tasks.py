@@ -296,53 +296,16 @@ def _process_wan_isps(
         db.add(snap)
 
 
-INFRASTRUCTURE_IPS = settings.infrastructure_ips_set
-
-VM_MAC_OUIS = (
-    "00:50:56", "00:0C:29", "00:05:69", "00:1C:14",  # VMware
-    "52:54:00",                                     # QEMU / KVM / Proxmox
-    "08:00:27",                                     # Oracle VirtualBox
-    "00:15:5D",                                     # Microsoft Hyper-V
-    "00:16:3E",                                     # Xen
-    "00:1C:42",                                     # Parallels
-)
-
-SERVER_KEYWORDS = (
-    "srv", "server", "sql", "db", "database", "gitlab", "nextcloud", "webapp",
-    "vm", "hyperv", "proxmox", "docker", "kubernetes", "nas", "pve", "esxi",
-    "vcenter", "qemu", "virt", "k8s", "container", "ubuntu-server", "debian-srv"
-)
-
-
 def _is_virtual_machine(
     mac: str,
     hostname: str | None = None,
     ip: str | None = None,
 ) -> bool:
     """
-    Determine if a device is a Server or Virtual Machine based on priority rules:
-    1. Priority 1: Match IP against permanent infrastructure list.
-    2. Exclusion: Mobile/user devices (Android, iPhone, etc.) are always user devices.
-    3. Priority 2: Match name/hostname against Server/VM keywords.
-    4. Priority 3: Match MAC OUI against VM hypervisor prefixes.
+    Determine if a device is a Virtual Machine based ONLY on explicit IP match.
     """
-    if ip and ip.strip() in INFRASTRUCTURE_IPS:
+    if ip and ip.strip() in settings.vm_ips_set:
         return True
-
-    if hostname:
-        host_lower = hostname.lower()
-        if any(mobile_kw in host_lower for mobile_kw in ("android", "iphone", "galaxy", "ipad", "phone", "mobile")):
-            return False
-
-        for kw in SERVER_KEYWORDS:
-            if kw in host_lower:
-                return True
-
-    if mac:
-        clean_mac = mac.upper().replace("-", ":")
-        for oui in VM_MAC_OUIS:
-            if clean_mac.startswith(oui):
-                return True
 
     return False
 
